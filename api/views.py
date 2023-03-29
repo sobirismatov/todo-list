@@ -1,4 +1,5 @@
 from django.http import HttpRequest, JsonResponse
+from django.views import View
 from django.core.exceptions import ObjectDoesNotExist
 import json
 from .models import Task
@@ -15,15 +16,27 @@ def to_dict(task: Task) -> dict:
         'updated': task.updated,
     }
 
-def get_all(request: HttpRequest) -> JsonResponse:
-    '''get all tasks'''
-    tasks = Task.objects.all()
-    data = {'tasks': []}
+class Get_all(View):
+    def get(self, request: HttpRequest) -> JsonResponse:
+        '''get all tasks'''
+        tasks = Task.objects.all()
+        data = {'tasks': []}
 
-    for task in tasks:
-        data['tasks'].append(to_dict(task))
+        for task in tasks:
+            data['tasks'].append(to_dict(task))
 
-    return JsonResponse(data)
+        return JsonResponse(data)
+    
+    def post(self, request: HttpRequest) -> JsonResponse:
+        '''create task'''
+        data = request.body.decode('utf-8')
+        data = json.loads(data)
+        task = Task.objects.create(
+            name=data['name'],
+            description=data['description'],
+            completed=data['completed']
+        )
+        return JsonResponse(to_dict(task))
 
 def get_task(request: HttpRequest, id: int) -> JsonResponse:
     '''get task by id'''
